@@ -51,8 +51,14 @@ def get_output_dir():
 
 def run(ytdlp: str, args: list, output_dir: str):
     """Запускає yt-dlp з аргументами"""
-    template = os.path.join(output_dir, "%(title)s.%(ext)s")
-    cmd = [ytdlp] + args + ["--progress", "--no-check-certificate", "-o", template]
+    tmp_dir = "/tmp/yt-dlp-tmp"
+    os.makedirs(tmp_dir, exist_ok=True)
+    cmd = [ytdlp] + args + [
+        "--progress", "--no-check-certificate",
+        "--paths", f"home:{output_dir}",
+        "--paths", f"temp:{tmp_dir}",
+        "-o", "%(title)s.%(ext)s",
+    ]
     print(f"\n  {C}📁 Збереження до: {output_dir}{R}\n")
     try:
         subprocess.run(cmd)
