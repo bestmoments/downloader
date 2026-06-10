@@ -1,23 +1,11 @@
-1#!/usr/bin/env python3
-"""
-🎬 MediaGrab — завантажувач відео з YouTube та музики з SoundCloud
-Використовує yt-dlp як CLI-команду (встанови: brew install pipx && pipx install yt-dlp)
-"""
-
+#!/usr/bin/env python3
 import os
 import sys
 import shutil
 import subprocess
 
-# ─── Кольори ────────────────────────────────────────────────────────────────
 R = "\033[0m";  B = "\033[1m";  C = "\033[96m"
-G = "\033[92m"; Y = "\033[93m"; M = "\033[95m"; E = "\033[91m"
-
-BANNER = f"""
-{C}{B}╔══════════════════════════════════════════════════════╗
-║        🎬  MediaGrab  —  YouTube & SoundCloud        ║
-╚══════════════════════════════════════════════════════╝{R}
-"""
+G = "\033[92m"; Y = "\033[93m"; E = "\033[91m"
 
 def find_ytdlp():
     """Знаходить виконуваний файл yt-dlp"""
@@ -61,81 +49,78 @@ def get_output_dir():
             return p
     return os.getcwd()
 
-def run(args: list, output_dir: str):
+def run(ytdlp: str, args: list, output_dir: str):
     """Запускає yt-dlp з аргументами"""
     template = os.path.join(output_dir, "%(title)s.%(ext)s")
-    cmd = [YTDLP] + args + ["--progress", "--no-check-certificate", "-o", template]
+    cmd = [ytdlp] + args + ["--progress", "--no-check-certificate", "-o", template]
     print(f"\n  {C}📁 Збереження до: {output_dir}{R}\n")
     try:
-        subprocess.run(cmd, check=False)
+        subprocess.run(cmd)
     except KeyboardInterrupt:
         print(f"\n  {Y}⛔ Скасовано{R}")
 
-def show_formats(url: str):
-    print(f"\n  {Y}⏳ Отримання форматів...{R}\n")
-    subprocess.run([YTDLP, "-F", "--no-check-certificate", url], check=False)
+
+SEPARATOR = None
 
 # ─── Меню YouTube ────────────────────────────────────────────────────────────
 YT_MENU = [
-    ("Найкраща якість (mp4)",        ["-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best", "--merge-output-format", "mp4"]),
-    ("1080p (mp4)",                  ["-f", "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]", "--merge-output-format", "mp4"]),
-    ("720p (mp4)",                   ["-f", "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]", "--merge-output-format", "mp4"]),
-    ("480p (mp4)",                   ["-f", "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]", "--merge-output-format", "mp4"]),
-    ("360p (mp4)",                   ["-f", "bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]", "--merge-output-format", "mp4"]),
-    ("Лише аудіо — MP3 320kbps",     ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", "0"]),
-    ("Лише аудіо — MP3 192kbps",     ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", "5"]),
-    ("Лише аудіо — AAC",             ["-f", "bestaudio/best", "-x", "--audio-format", "aac"]),
-    ("Лише аудіо — FLAC",            ["-f", "bestaudio/best", "-x", "--audio-format", "flac"]),
-    ("Лише аудіо — WAV",             ["-f", "bestaudio/best", "-x", "--audio-format", "wav"]),
-    ("Найкраща якість (webm)",       ["-f", "bestvideo[ext=webm]+bestaudio[ext=webm]/best[ext=webm]", "--merge-output-format", "webm"]),
-    ("Показати всі доступні формати", None),
+    ("Відео — 1080p",                 ["-f", "bestvideo[height<=1080][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]", "--merge-output-format", "mp4"]),
+    ("Відео — 720p",                  ["-f", "bestvideo[height<=720][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]", "--merge-output-format", "mp4"]),
+    ("Відео — 360p",                  ["-f", "bestvideo[height<=360][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]", "--merge-output-format", "mp4"]),
+    ("Найкраща якість відео",         ["-f", "bestvideo+bestaudio/best", "--merge-output-format", "mp4"]),
+    SEPARATOR,
+    ("Аудіо — AAC (для Apple)",      ["-f", "bestaudio/best", "-x", "--audio-format", "aac"]),
+    ("Аудіо — MP3",                  ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", "0"]),
 ]
 
 # ─── Меню SoundCloud ─────────────────────────────────────────────────────────
 SC_MENU = [
-    ("MP3 найкраща якість",          ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", "0"]),
-    ("Оригінальний формат",          ["-f", "bestaudio/best"]),
-    ("FLAC",                         ["-f", "bestaudio/best", "-x", "--audio-format", "flac"]),
-    ("Показати всі доступні формати", None),
+    ("Найкраща якість в MP3",               ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", "0"]),
+    ("AAC (Оригінальний формат для Apple)", ["-f", "bestaudio/best"]),
+    ("FLAC (максимальна якість, але великі файли)", ["-f", "bestaudio/best", "-x", "--audio-format", "flac"]),
 ]
 
-def show_menu(title: str, items: list, output_dir: str):
+def show_menu(ytdlp: str, title: str, items: list, output_dir: str):
+    selectable = [item for item in items if item is not SEPARATOR]
     print(f"\n{B}{C}  ── {title} {'─'*(46-len(title))}{R}")
-    for i, (label, _) in enumerate(items, 1):
-        print(f"  {Y}{i:>2}.{R} {label}")
-    print(f"  {Y} 0.{R} ← Назад")
+    num = 1
+    for item in items:
+        if item is SEPARATOR:
+            print()
+        else:
+            label, _ = item
+            print(f"  {Y}{num:>2}.{R} {label}")
+            num += 1
+    print(f"\n  {Y} 0.{R} ← Назад")
 
     choice = input(f"\n  {B}Оберіть формат: {R}").strip()
     if choice == "0":
         return
     try:
         idx = int(choice) - 1
-        assert 0 <= idx < len(items)
-    except (ValueError, AssertionError):
+    except ValueError:
+        print(f"  {E}Невірний вибір{R}")
+        return
+    if not (0 <= idx < len(selectable)):
         print(f"  {E}Невірний вибір{R}")
         return
 
-    label, args = items[idx]
+    label, args = selectable[idx]
+
     url = input(f"  {B}Вставте посилання: {R}").strip()
     if not url:
         print(f"  {E}Порожнє посилання{R}")
         return
 
-    if args is None:
-        show_formats(url)
-        return
-
     print(f"\n  {G}▶ {label}{R}")
-    run(args + [url], output_dir)
+    run(ytdlp, args + [url], output_dir)
 
 def main():
-    global YTDLP
-    YTDLP = check_ytdlp()
+    ytdlp = check_ytdlp()
 
-    print(BANNER)
     output_dir = get_output_dir()
     print(f"  {C}📁 Файли зберігатимуться до: {B}{output_dir}{R}")
-    print(f"  {C}🔧 yt-dlp: {YTDLP}{R}")
+    print(f"  {C}🔧 yt-dlp: {ytdlp}{R}")
 
     while True:
         print(f"""
@@ -148,9 +133,9 @@ def main():
         choice = input(f"  {B}Ваш вибір: {R}").strip()
 
         if choice == "1":
-            show_menu("Формати YouTube", YT_MENU, output_dir)
+            show_menu(ytdlp, "Формати YouTube", YT_MENU, output_dir)
         elif choice == "2":
-            show_menu("Формати SoundCloud", SC_MENU, output_dir)
+            show_menu(ytdlp, "Формати SoundCloud", SC_MENU, output_dir)
         elif choice == "3":
             new = input(f"  {B}Нова тека (Enter — без змін): {R}").strip()
             if new:
