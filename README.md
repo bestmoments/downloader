@@ -30,4 +30,10 @@ python3 downloader.py
 ```
 python3 web.py
 ```
-Відкрий: `http://127.0.0.1:8080`
+
+Знайди IP свого Mac:
+```
+ipconfig getifaddr en0
+```
+І відкрий у браузері:
+`http://<твій-ip>:8080`
