@@ -2,31 +2,39 @@
 
 ## Що це
 
-CLI-скрипт на Python для завантаження відео/аудіо з YouTube та SoundCloud через `yt-dlp`.
+Python-програма для завантаження відео/аудіо з YouTube та SoundCloud через `yt-dlp`. Має два інтерфейси: CLI (термінал) і веб (браузер).
 
 ## Структура
 
 ```
 downloader/
-├── downloader.py       — весь код
+├── downloader.py       — CLI-програма (весь код завантаження)
+├── web.py              — Flask веб-сервер (імпортує з downloader.py)
+├── templates/
+│   └── index.html      — HTML-сторінка веб-інтерфейсу
 ├── setup.sh            — встановлення залежностей на новому Mac (одноразово)
 ├── README.md           — інструкція для GitHub
+├── .venv/              — віртуальне середовище (не в git)
+├── .vscode/
+│   └── settings.json   — інтерпретер .venv для VSCode
+├── .gitignore          — ігнорує .venv, __pycache__, .DS_Store
 └── .claude/
     └── CONTEXT.md      — цей файл, контекст для Claude
 ```
 
 ## Залежності
 
-- `yt-dlp` — зовнішній CLI-інструмент. Встановлюється через `setup.sh` або вручну:
-  - `brew install pipx && pipx install yt-dlp && pipx ensurepath`
+- `yt-dlp` — зовнішній CLI-інструмент. Встановлюється через `setup.sh`
+- `flask` — для веб-інтерфейсу. Встановлюється через `setup.sh` у `.venv`
 
 ## Як запустити
 
 ```bash
-python3 downloader.py
+python3 downloader.py   # CLI
+python3 web.py          # веб → http://127.0.0.1:8080
 ```
 
-## Архітектура
+## Архітектура downloader.py
 
 - `find_ytdlp()` — шукає yt-dlp у стандартних шляхах
 - `check_ytdlp()` — викликає `find_ytdlp`, виходить з помилкою якщо не знайдено
@@ -34,6 +42,14 @@ python3 downloader.py
 - `run(ytdlp, args, output_dir)` — запускає yt-dlp з аргументами
 - `show_menu(ytdlp, title, items, output_dir)` — інтерактивне меню вибору формату
 - `main()` — головний цикл: YouTube / SoundCloud / змінити теку / вийти
+
+## Архітектура web.py
+
+- Імпортує `find_ytdlp`, `YT_MENU`, `SC_MENU`, `SEPARATOR` з `downloader.py`
+- `GET /` — повертає HTML-сторінку з формою
+- `POST /download` — отримує URL і формат, запускає yt-dlp у тимчасовій теці, повертає файл браузеру і видаляє тимчасову теку
+- Тимчасові файли зберігаються у `/tmp/ytdlp-web/<uuid>/`
+- Порт: 8080 (5000 зайнятий AirPlay на macOS)
 
 ## Меню YouTube
 
@@ -55,4 +71,5 @@ python3 downloader.py
 - mp4 формати використовують `[vcodec^=avc1]` для H.264 — відкриваються в QuickTime
 - "Найкраща якість відео" без обмежень по кодеку — для 4K потрібен IINA або VLC
 - `SEPARATOR = None` — використовується для порожнього рядка між пунктами меню
-- Тимчасові файли (потоки до злиття, `.part`) йдуть у `/tmp/yt-dlp-tmp` — у Downloads з'являється лише фінальний файл
+- Тимчасові файли CLI (потоки до злиття, `.part`) йдуть у `/tmp/yt-dlp-tmp`
+- Веб-інтерфейс простий: браузер чекає поки завантажиться файл (без прогрес-бару)
