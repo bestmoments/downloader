@@ -73,16 +73,17 @@ YT_MENU = [
     ("Відео — 1080p",                 ["-f", "bestvideo[height<=1080][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]", "--merge-output-format", "mp4"]),
     ("Відео — 720p",                  ["-f", "bestvideo[height<=720][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]", "--merge-output-format", "mp4"]),
     ("Відео — 360p",                  ["-f", "bestvideo[height<=360][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]", "--merge-output-format", "mp4"]),
-    ("Найкраща якість відео",         ["-f", "bestvideo+bestaudio/best", "--merge-output-format", "mp4"]),
+    ("Відео — best",                   ["-f", "bestvideo+bestaudio/best", "--merge-output-format", "mp4"]),
+    ("Відео — worst",                  ["-f", "worstvideo[vcodec^=avc1]+worstaudio/worstvideo[ext=mp4]+worstaudio/worst", "--merge-output-format", "mp4"]),
     SEPARATOR,
-    ("Аудіо — AAC (для Apple)",      ["-f", "bestaudio/best", "-x", "--audio-format", "aac"]),
+    ("Аудіо — AAC",                  ["-f", "bestaudio/best", "-x", "--audio-format", "aac"]),
     ("Аудіо — MP3",                  ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", "0"]),
 ]
 
 # ─── Меню SoundCloud ─────────────────────────────────────────────────────────
 SC_MENU = [
-    ("Найкраща якість в MP3",               ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", "0"]),
-    ("AAC (Оригінальний формат для Apple)", ["-f", "bestaudio/best"]),
+    ("AAC (оригінальний формат для Apple)", ["-f", "bestaudio/best"]),
+    ("MP3 (найкраща якість для всіх пристроїв)", ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", "0"]),
     ("FLAC (максимальна якість, але великі файли)", ["-f", "bestaudio/best", "-x", "--audio-format", "flac"]),
 ]
 

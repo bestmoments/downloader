@@ -120,6 +120,25 @@
     button[type="submit"]:active {
       background: #ff7744;
     }
+
+    button[type="submit"]:disabled {
+      background: #ccc;
+      border-color: #aaa;
+      color: #888;
+      cursor: not-allowed;
+    }
+
+    @keyframes dots {
+      0%   { content: ""; }
+      25%  { content: "."; }
+      50%  { content: ".."; }
+      75%  { content: "..."; }
+    }
+
+    button.loading::after {
+      content: "";
+      animation: dots 1.6s steps(1, end) infinite;
+    }
   </style>
 </head>
 <body>
@@ -153,8 +172,49 @@
         </div>
       </div>
 
-      <button type="submit">Завантажити</button>
+      <button type="submit" id="btn">Завантажити</button>
     </form>
   </div>
+  <script>
+    document.querySelector("form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const btn = document.getElementById("btn");
+      btn.textContent = "Завантаження";
+      btn.classList.add("loading");
+      btn.disabled = true;
+
+      try {
+        const res = await fetch("/download", { method: "POST", body: new FormData(this) });
+        if (!res.ok) {
+          const text = await res.text();
+          alert(text);
+          return;
+        }
+        const blob = await res.blob();
+        const cd = res.headers.get("Content-Disposition") || "";
+        let filename = "download";
+        let m = cd.match(/filename\*=UTF-8''([^;]+)/i);
+        if (m) {
+          filename = decodeURIComponent(m[1].trim());
+        } else {
+          m = cd.match(/filename="([^"]+)"/i) || cd.match(/filename=([^;]+)/i);
+          if (m) filename = m[1].trim();
+        }
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      } catch (err) {
+        alert("Помилка з'єднання");
+      } finally {
+        btn.textContent = "Завантажити";
+        btn.classList.remove("loading");
+        btn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>

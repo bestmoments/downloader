@@ -53,7 +53,7 @@ def download():
     if not files:
         shutil.rmtree(session_dir, ignore_errors=True)
         err = result.stderr.decode(errors="replace")
-        return f"<pre>Помилка:\n{err}</pre>", 500
+        return f"Помилка:\n{err}", 500, {"Content-Type": "text/plain; charset=utf-8"}
 
     filepath = files[0]
 
