@@ -66,4 +66,9 @@ def download():
 
 
 if __name__ == "__main__":
+    hostname = subprocess.run(
+        ["scutil", "--get", "LocalHostName"], capture_output=True, text=True
+    ).stdout.strip()
+    if hostname and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        print(f" * Пристрої в мережі:  http://{hostname}.local:8080")
     app.run(debug=True, host="0.0.0.0", port=8080)
